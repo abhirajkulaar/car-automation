@@ -1,7 +1,6 @@
 package com.harrysoft.androidbluetoothserial.demoapp;
 
 import android.app.Application;
-import android.content.Intent;
 import android.media.AudioManager;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -21,10 +20,10 @@ import org.jetbrains.annotations.Nullable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
-import java.util.function.IntBinaryOperator;
+
 import java.util.function.IntConsumer;
 
-public class CommunicateViewModel extends AndroidViewModel {
+public class MainActivityViewModel extends AndroidViewModel {
 
     // A CompositeDisposable that keeps track of all of our asynchronous tasks
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
@@ -58,7 +57,7 @@ public class CommunicateViewModel extends AndroidViewModel {
     private boolean viewModelSetup = false;
     private IntConsumer LaunchAssistantFunc;
     // Called by the system, this is just a constructor that matches AndroidViewModel.
-    public CommunicateViewModel(@NotNull Application application) {
+    public MainActivityViewModel(@NotNull Application application) {
         super(application);
     }
 
@@ -154,6 +153,7 @@ public class CommunicateViewModel extends AndroidViewModel {
     // Adds a received message to the conversation
     private void onMessageReceived(String message) {
        // Toast.makeText(getApplication(), "message received", Toast.LENGTH_LONG).show();
+        messages = new StringBuilder("");
         messages.append(deviceName).append(": ").append(message).append('\n');
         messagesData.postValue(messages.toString());
         // Toast.makeText(getApplication(), messages.toString(), Toast.LENGTH_LONG).show();

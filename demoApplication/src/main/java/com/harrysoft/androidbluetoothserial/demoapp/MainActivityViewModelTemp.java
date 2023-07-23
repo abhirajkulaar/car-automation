@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class MainActivityViewModel extends AndroidViewModel {
+public class MainActivityViewModelTemp extends AndroidViewModel {
 
     // Our BluetoothManager!
     private BluetoothManager bluetoothManager;
@@ -26,7 +26,7 @@ public class MainActivityViewModel extends AndroidViewModel {
     private boolean viewModelSetup = false;
 
     // Called by the system, this is just a constructor that matches AndroidViewModel.
-    public MainActivityViewModel(@NotNull Application application) {
+    public MainActivityViewModelTemp(@NotNull Application application) {
         super(application);
     }
 

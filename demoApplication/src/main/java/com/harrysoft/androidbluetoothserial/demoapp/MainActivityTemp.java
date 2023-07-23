@@ -20,9 +20,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivityTemp extends AppCompatActivity {
 
-    private MainActivityViewModel viewModel;
+    private MainActivityViewModelTemp viewModel;
 
     public static Intent intent;
     @Override
@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Setup our ViewModel
-        viewModel = ViewModelProviders.of(this).get(MainActivityViewModel.class);
+        viewModel = ViewModelProviders.of(this).get(MainActivityViewModelTemp.class);
 
         // This method return false if there is an error, so if it does, we should close.
         if (!viewModel.setupViewModel()) {
@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Start observing the data sent to us by the ViewModel
-        viewModel.getPairedDeviceList().observe(MainActivity.this, adapter::updateList);
+        viewModel.getPairedDeviceList().observe(MainActivityTemp.this, adapter::updateList);
 
         // Immediately refresh the paired devices list
         viewModel.refreshPairedDevices();
@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Called when clicking on a device entry to start the CommunicateActivity
     public void openCommunicationsActivity(String deviceName, String macAddress) {
-        this.intent = new Intent(this, CommunicateActivity.class);
+        this.intent = new Intent(this, MainActivity.class);
         intent.putExtra("device_name", deviceName);
         intent.putExtra("device_mac", macAddress);
         startActivity(intent);

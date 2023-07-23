@@ -1,6 +1,7 @@
 package com.harrysoft.androidbluetoothserial.demoapp;
 
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MenuItem;
@@ -13,14 +14,14 @@ import androidx.lifecycle.ViewModelProviders;
 import android.media.AudioManager;
 
 
-public class CommunicateActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity {
 
     private TextView connectionText, messagesView;
     private EditText messageBox;
 
     private Button sendButton, connectButton;
 
-    private CommunicateViewModel viewModel;
+    private MainActivityViewModel viewModel;
     private AudioManager audio;
     private static Intent LaunchAssistantIntent;
     public void LaunchAssistant(int j) {
@@ -37,9 +38,10 @@ public class CommunicateActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-
+       //  IntentFilter intentFilter = new IntentFilter("android.intent.action.AIRPLANE_MODE");
+       // context.registerReceiver
         // Setup our ViewModel
-        viewModel = ViewModelProviders.of(this).get(CommunicateViewModel.class);
+        viewModel = ViewModelProviders.of(this).get(MainActivityViewModel.class);
         audio = (AudioManager) getSystemService(this.getBaseContext().AUDIO_SERVICE);
 
         // This method return false if there is an error, so if it does, we should close.
@@ -83,7 +85,7 @@ public class CommunicateActivity extends AppCompatActivity {
 
 
     // Called when the ViewModel updates us of our connectivity status
-    private void onConnectionStatus(CommunicateViewModel.ConnectionStatus connectionStatus) {
+    private void onConnectionStatus(MainActivityViewModel.ConnectionStatus connectionStatus) {
         switch (connectionStatus) {
             case CONNECTED:
                 connectionText.setText(R.string.status_connected);
