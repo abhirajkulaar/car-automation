@@ -1,72 +1,116 @@
 package com.harrysoft.androidbluetoothserial.demoapp;
 
-import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.LayoutInflater;
+import android.text.TextUtils;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.RelativeLayout;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProviders;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import android.media.AudioManager;
 
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+public class CommunicateActivity extends AppCompatActivity {
 
-public class MainActivity extends AppCompatActivity {
+    private TextView connectionText, messagesView;
+    private EditText messageBox;
 
-    private MainActivityViewModel viewModel;
+    private Button sendButton, connectButton;
+
+    private CommunicateViewModel viewModel;
+    private AudioManager audio;
+    private static Intent LaunchAssistantIntent;
+    public void LaunchAssistant(int j) {
+        startActivity(new Intent(Intent.ACTION_VOICE_COMMAND).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //LaunchAssistant();
         // Setup our activity
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_communicate);
+        // Enable the back button in the action bar if possible
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         // Setup our ViewModel
-        viewModel = ViewModelProviders.of(this).get(MainActivityViewModel.class);
+        viewModel = ViewModelProviders.of(this).get(CommunicateViewModel.class);
+        audio = (AudioManager) getSystemService(this.getBaseContext().AUDIO_SERVICE);
 
         // This method return false if there is an error, so if it does, we should close.
-        if (!viewModel.setupViewModel()) {
+//        if (!viewModel.setupViewModel(getIntent().getStringExtra("device_name"), getIntent().getStringExtra("device_mac"), audio, (j)->LaunchAssistant(j) )) {
+//            finish();
+//            return;
+//        }
+
+        if (!viewModel.setupViewModel("HC-05", "00:22:06:01:8D:1F", audio, (j)->LaunchAssistant(j) )) {
             finish();
             return;
         }
 
         // Setup our Views
-        RecyclerView deviceList = findViewById(R.id.main_devices);
-        SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.main_swiperefresh);
-
-        // Setup the RecyclerView
-        deviceList.setLayoutManager(new LinearLayoutManager(this));
-        DeviceAdapter adapter = new DeviceAdapter();
-        deviceList.setAdapter(adapter);
-
-        // Setup the SwipeRefreshLayout
-        swipeRefreshLayout.setOnRefreshListener(() -> {
-            viewModel.refreshPairedDevices();
-            swipeRefreshLayout.setRefreshing(false);
-        });
+        connectionText = findViewById(R.id.communicate_connection_text);
+        messagesView = findViewById(R.id.communicate_messages);
+        messageBox = findViewById(R.id.communicate_message);
+        sendButton = findViewById(R.id.communicate_send);
+        connectButton = findViewById(R.id.communicate_connect);
 
         // Start observing the data sent to us by the ViewModel
-        viewModel.getPairedDeviceList().observe(MainActivity.this, adapter::updateList);
+        viewModel.getConnectionStatus().observe(this, this::onConnectionStatus);
+        viewModel.getDeviceName().observe(this, name -> setTitle(getString(R.string.device_name_format, name)));
+        viewModel.getMessages().observe(this, message -> {
+            if (TextUtils.isEmpty(message)) {
+                message = getString(R.string.no_messages);
+            }
+            messagesView.setText(message);
+        });
+        viewModel.getMessage().observe(this, message -> {
+            // Only update the message if the ViewModel is trying to reset it
+            if (TextUtils.isEmpty(message)) {
+                messageBox.setText(message);
+            }
+        });
 
-        // Immediately refresh the paired devices list
-        viewModel.refreshPairedDevices();
+        // Setup the send button click action
+        sendButton.setOnClickListener(v -> viewModel.sendMessage(messageBox.getText().toString()));
     }
 
-    // Called when clicking on a device entry to start the CommunicateActivity
-    public void openCommunicationsActivity(String deviceName, String macAddress) {
-        Intent intent = new Intent(this, CommunicateActivity.class);
-        intent.putExtra("device_name", deviceName);
-        intent.putExtra("device_mac", macAddress);
-        startActivity(intent);
+
+
+    // Called when the ViewModel updates us of our connectivity status
+    private void onConnectionStatus(CommunicateViewModel.ConnectionStatus connectionStatus) {
+        switch (connectionStatus) {
+            case CONNECTED:
+                connectionText.setText(R.string.status_connected);
+                messageBox.setEnabled(true);
+                sendButton.setEnabled(true);
+                connectButton.setEnabled(true);
+                connectButton.setText(R.string.disconnect);
+                connectButton.setOnClickListener(v -> viewModel.disconnect());
+                break;
+
+            case CONNECTING:
+                connectionText.setText(R.string.status_connecting);
+                messageBox.setEnabled(false);
+                sendButton.setEnabled(false);
+                connectButton.setEnabled(false);
+                connectButton.setText(R.string.connect);
+                break;
+
+            case DISCONNECTED:
+                connectionText.setText(R.string.status_disconnected);
+                messageBox.setEnabled(false);
+                sendButton.setEnabled(false);
+                connectButton.setEnabled(true);
+                connectButton.setText(R.string.connect);
+                connectButton.setOnClickListener(v -> viewModel.connect());
+                break;
+        }
     }
 
     // Called when a button in the action bar is pressed
@@ -89,52 +133,5 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         // Close the activity
         finish();
-    }
-
-    // A class to hold the data in the RecyclerView
-    private class DeviceViewHolder extends RecyclerView.ViewHolder {
-
-        private final RelativeLayout layout;
-        private final TextView text1;
-        private final TextView text2;
-
-        DeviceViewHolder(View view) {
-            super(view);
-            layout = view.findViewById(R.id.list_item);
-            text1 = view.findViewById(R.id.list_item_text1);
-            text2 = view.findViewById(R.id.list_item_text2);
-        }
-
-        void setupView(BluetoothDevice device) {
-            text1.setText(device.getName());
-            text2.setText(device.getAddress());
-            layout.setOnClickListener(view -> openCommunicationsActivity(device.getName(), device.getAddress()));
-        }
-    }
-
-    // A class to adapt our list of devices to the RecyclerView
-    private class DeviceAdapter extends RecyclerView.Adapter<DeviceViewHolder> {
-        private BluetoothDevice[] deviceList = new BluetoothDevice[0];
-
-        @NotNull
-        @Override
-        public DeviceViewHolder onCreateViewHolder(@NotNull ViewGroup parent, int viewType) {
-            return new DeviceViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item, parent, false));
-        }
-
-        @Override
-        public void onBindViewHolder(@NotNull DeviceViewHolder holder, int position) {
-            holder.setupView(deviceList[position]);
-        }
-
-        @Override
-        public int getItemCount() {
-            return deviceList.length;
-        }
-
-        void updateList(Collection<BluetoothDevice> deviceList) {
-            this.deviceList = deviceList.toArray(new BluetoothDevice[0]);
-            notifyDataSetChanged();
-        }
     }
 }
